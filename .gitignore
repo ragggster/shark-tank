@@ -89,4 +89,4 @@ ENV/
 .ropeproject
 
 # audio files
-.mp3
+*.mp3
