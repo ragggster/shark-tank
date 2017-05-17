@@ -10,7 +10,7 @@ import pickle as pkl
 from collections import defaultdict
 from unpickle import unpickle 
 
-CSV = "season5-pitches.csv" ## Change link to change season
+CSV = "season8-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]
@@ -19,7 +19,7 @@ if not os.path.exists(savedir):
 
 # create YouTube downloader
 options = {
-    'format': 'wav/bestaudio', # choice of quality
+    'format': 'bestaudio/best', # choice of quality
     'extractaudio' : True,      # only keep the audio
     'audioformat' : "wav",      # convert to mp3 
     'outtmpl': '%(id)s',        # name the file the ID of the video
@@ -28,7 +28,9 @@ options = {
 ydl = youtube_dl.YoutubeDL(options)
 
 def make_savepath(title, artist, savedir=savedir):
-    return os.path.join(savedir, "%s--%s.%s" % (title, artist, options['audioformat']))
+    file_name = ("%s--%s.%s" % (title, artist, options['audioformat']))
+    file_name = '_'.join(file_name.split(' '))
+    return os.path.join(savedir, file_name)
 
 
 downloads = {}
