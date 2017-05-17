@@ -1,2 +1,4 @@
 python_speech_features
 scipy
+youtube_dl
+pandas
