@@ -10,7 +10,7 @@ import pickle as pkl
 from collections import defaultdict
 from unpickle import unpickle 
 
-CSV = "season8-pitches.csv"
+CSV = "season4-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]
