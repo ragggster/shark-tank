@@ -17,17 +17,19 @@ savedir = os.path.splitext(CSV)[0]
 if not os.path.exists(savedir):
     os.makedirs(savedir)
 
-def make_savepath(title, artist, savedir=savedir):
-    return os.path.join(savedir, "%s--%s.mp3" % (title, artist))
-
 # create YouTube downloader
 options = {
-    'format': 'bestaudio/best', # choice of quality
+    'format': 'wav/bestaudio', # choice of quality
     'extractaudio' : True,      # only keep the audio
-    'audioformat' : "mp3",      # convert to mp3 
+    'audioformat' : "wav",      # convert to mp3 
     'outtmpl': '%(id)s',        # name the file the ID of the video
-    'noplaylist' : True,}       # only download single song, not playlist
+    'noplaylist' : True,
+    }       # only download single song, not playlist
 ydl = youtube_dl.YoutubeDL(options)
+
+def make_savepath(title, artist, savedir=savedir):
+    return os.path.join(savedir, "%s--%s.%s" % (title, artist, options['audioformat']))
+
 
 downloads = {}
 
@@ -52,6 +54,7 @@ with ydl:
             # download video
             try:
                 r = ydl.extract_info(row.Link, download=True)
+                print(r['id'], savepath)
                 os.rename(r['id'], savepath)
                 # print r 
                 ### Go through the trouble of creating an extra dict here bc otherwise we'd be saving a ton of extraneous info like HTML header stuff and other useless things
