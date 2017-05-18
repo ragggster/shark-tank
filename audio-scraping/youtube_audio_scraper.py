@@ -10,8 +10,8 @@ import pickle as pkl
 from collections import defaultdict
 from unpickle import unpickle 
 from scikits.audiolab import Format
-
-
+from collections import Counter
+import re
 
 CSV = "season8-pitches.csv" ## Change link to change season
 
@@ -37,8 +37,8 @@ options = {
     
 ydl = youtube_dl.YoutubeDL(options)
 
-def make_savepath(title, artist, savedir=savedir):
-    file_name = ("%s--%s.%s" % (title, artist, options['audioformat']))
+def make_savepath(encoded_name, savedir=savedir):
+    file_name = ("%s.%s" % (encoded_name, options['audioformat']))
     #file_name = '_'.join(file_name.split(' ')) #replaces spaces with underscores
     return os.path.join(savedir, file_name)
 
@@ -51,12 +51,22 @@ with ydl:
     df = pd.read_csv(CSV, sep=";", skipinitialspace=True)
     df.Link = df.Link.map(str.strip)  # strip space from URLs
 
+    name_counter = Counter() #Used to count which pitch we are on
+    season_regex = re.compile('[Ss]eason[ \t]*(?P<season>\d+)')
+    episode_regex = re.compile('[Ee]pisode[ \t]*(?P<episode>\d+)')
+
     # for each row, download
     for _, row in df.iterrows():
         print "Downloading: %s from %s..." % (row.Title, row.Link)
+        
+        season = season_regex.search(row.Title).group('season')
+        episode = episode_regex.search(row.Title).group('episode')
+        enc_name = 's' + str(season) + '-e' + str(episode)
+        name_counter.update([enc_name])
+        enc_name = enc_name + '-p' + str(name_counter[enc_name])
 
         # download location, check for progress
-        savepath = make_savepath(row.Title, row.Artist)
+        savepath = make_savepath(enc_name)
         try:
             os.stat(savepath)
             print "%s already downloaded, continuing..." % savepath
@@ -66,7 +76,6 @@ with ydl:
             # download video
             try:
                 r = ydl.extract_info(row.Link, download=True)
-                print(r['id']+ '.' + options['audioformat'] )
                 os.rename(r['id']+ '.' + options['audioformat'] , savepath)
                 # print r 
                 ### Go through the trouble of creating an extra dict here bc otherwise we'd be saving a ton of extraneous info like HTML header stuff and other useless things
@@ -77,7 +86,8 @@ with ydl:
                 d['like_count'] = r['like_count']
                 d['dislike_count'] = r['dislike_count']
 
-                downloads[r['title']] = d
+
+                downloads[enc_name] = d
 
                 #print "%s was uploaded by '%s' and has %d views, %d likes, and %d dislikes" % (r['title'], r['uploader'], r['view_count'], r['like_count'], r['dislike_count'])
                 #print "Downloaded and converted %s successfully!" % savepath
