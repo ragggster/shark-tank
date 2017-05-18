@@ -11,11 +11,13 @@ from scikits.audiolab import Sndfile
 from scikits import audiolab
 from unpickle import unpickle
 
-print (audiolab.available_file_formats())
 
+SEASON = 8
 
-DATA_DIR = './audio-scraping/season8-pitches'
-MFCC_DIR = './data/mfcc' 
+DATA_DIR = './audio-scraping/season%s-pitches' %(SEASON)
+MFCC_DIR = './data/mfcc_season%s' %(SEASON)
+META_FILE = './audio-scraping/season%s-pitches-metadata.p' % (SEASON)
+
 
 def get_files_in_dir(directory):
 	# http://stackoverflow.com/questions/3207219/how-to-list-all-files-of-a-directory
@@ -26,15 +28,14 @@ class MFCC_Extractor():
 	def __init__(self, input_dir):
 		self.input_fns = get_files_in_dir(input_dir)
 
-
-	def write_features(self, output_dir):
+	def write_features(self, meta_fn, output_dir):
 		# Write features as csv WITH headers so we can pick which to classify later
 		# load data
 		if not exists(output_dir):
 			os.makedirs(output_dir)
 
-
 		for pitch_audio_fn in self.input_fns:
+			
 			full_file = join(DATA_DIR, pitch_audio_fn)
 			open_wav = Sndfile(full_file)
 			rate = open_wav.samplerate
@@ -47,18 +48,17 @@ class MFCC_Extractor():
 			#(rate,sig) = wav.read(join(DATA_DIR, pitch_audio_fn))
 			mfcc_features = python_speech_features.mfcc(sig, rate)
 			
-			audio_fn_base = pitch_audio_fn.split('/')[-1]
-
-
-
+			with open(join(output_dir, pitch_audio_fn.split('.')[0]), 'w')	as output_fn:
+				np.save(output_fn, mfcc_features)
+			print "Extracted MFCC features for %s" %(pitch_audio_fn)
 
 class Baseline():
-	def __init__():
+	def __init__(self):
 		pass
 
 
 
-	def run_baseline(features_fns):
+	def run_baseline(self, features_fns):
 		filename_queue = tf.train.string_input_producer(features_fns)
 		
 
@@ -73,7 +73,7 @@ class Baseline():
 
 
 if __name__ == '__main__':
-	MFCC_Extractor(DATA_DIR).write_features(MFCC_DIR)
+	MFCC_Extractor(DATA_DIR).write_features(META_FILE, MFCC_DIR)
 
 	baseline = Baseline()
 	baseline.run_baseline(MFCC_DIR)
