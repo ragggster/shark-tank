@@ -47,9 +47,9 @@ class MFCC_Extractor():
 			# sig = open_wav.readframes(open_wav.getnframes())
 			#(rate,sig) = wav.read(join(DATA_DIR, pitch_audio_fn))
 			mfcc_features = python_speech_features.mfcc(sig, rate)
-			
+			print(mfcc_features.shape)
 			with open(join(output_dir, pitch_audio_fn.split('.')[0]), 'w')	as output_fn:
-				np.save(output_fn, mfcc_features)
+				np.savetxt(output_fn, mfcc_features, delimiter= ',')
 			print "Extracted MFCC features for %s" %(pitch_audio_fn)
 
 class Baseline():
