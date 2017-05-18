@@ -14,16 +14,19 @@ from unpickle import unpickle
 
 SEASON = 8
 DOWNSAMPLE = 1000
+EXTRACT = True
 
 DATA_DIR = './audio-scraping/season%s-pitches' %(SEASON)
-MFCC_DIR = './data/mfcc_season%s' %(SEASON)
+MFCC_DIR = './data/mfcc' 
 META_FILE = './audio-scraping/season%s-pitches-metadata.p' % (SEASON)
-
+LABELS_DIR = './data/labels/'
 
 def get_files_in_dir(directory):
 	# http://stackoverflow.com/questions/3207219/how-to-list-all-files-of-a-directory
 	return [f for f in listdir(directory) if (isfile(join(directory, f)) and f[0] != '.')]
 
+def get_label(line):
+	potential_labels = line.split(' ')[0] #ALTER THE INDEX TO CHANGE WHAT YOU ARE PREDICTING!!!!
 
 class MFCC_Extractor():
 	def __init__(self, input_dir):
@@ -51,20 +54,25 @@ class MFCC_Extractor():
 			print(np.prod(mfcc_features.shape))
 			with open(join(output_dir, pitch_audio_fn.split('.')[0]), 'w')	as output_fn:
 				np.savetxt(output_fn, mfcc_features, delimiter= ',')
+
 			print "Extracted MFCC features for %s into a csv" %(pitch_audio_fn)
 
 class Baseline():
 	def __init__(self):
-		pass
+		self.X_placeholder = tf.placeholder(tf.float32)
 
 
 
-	def run_baseline(self, features_fns):
-		filename_queue = tf.train.string_input_producer(features_fns)
-		
-
-		
-			
+	def run_baseline(self, features_dir, labels_dir):
+		labels = get_files_in_dir(labels_dir)
+		#features = get_files_in_dir(features_dir)
+		X, y = [], []
+		for label_fn in labels:
+			with open(join(labels_dir, label_fn)) as lfn:
+				y.append(get_label(lfn.readline()))
+			with open(join(features_dir, label_fn.split('.')[0] )) as ffn:
+				data = np.loadtxt(ffn, delimiter=',')
+				X.append(data.flatten())
 
 
 
@@ -74,7 +82,9 @@ class Baseline():
 
 
 if __name__ == '__main__':
-	MFCC_Extractor(DATA_DIR).write_features(META_FILE, MFCC_DIR)
+	
+	if(EXTRACT):
+		MFCC_Extractor(DATA_DIR).write_features(META_FILE, MFCC_DIR)
 
 	baseline = Baseline()
-	baseline.run_baseline(MFCC_DIR)
+	baseline.run_baseline(MFCC_DIR, LABELS_DIR)
