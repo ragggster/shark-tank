@@ -13,6 +13,7 @@ from unpickle import unpickle
 
 
 SEASON = 8
+DOWNSAMPLE = 1000
 
 DATA_DIR = './audio-scraping/season%s-pitches' %(SEASON)
 MFCC_DIR = './data/mfcc_season%s' %(SEASON)
@@ -38,7 +39,7 @@ class MFCC_Extractor():
 			
 			full_file = join(DATA_DIR, pitch_audio_fn)
 			open_wav = Sndfile(full_file)
-			rate = open_wav.samplerate
+			rate = open_wav.samplerate*DOWNSAMPLE
 			
 			sig = open_wav.read_frames(open_wav.nframes)
 
@@ -47,10 +48,10 @@ class MFCC_Extractor():
 			# sig = open_wav.readframes(open_wav.getnframes())
 			#(rate,sig) = wav.read(join(DATA_DIR, pitch_audio_fn))
 			mfcc_features = python_speech_features.mfcc(sig, rate)
-			print(mfcc_features.shape)
+			print(np.prod(mfcc_features.shape))
 			with open(join(output_dir, pitch_audio_fn.split('.')[0]), 'w')	as output_fn:
 				np.savetxt(output_fn, mfcc_features, delimiter= ',')
-			print "Extracted MFCC features for %s" %(pitch_audio_fn)
+			print "Extracted MFCC features for %s into a csv" %(pitch_audio_fn)
 
 class Baseline():
 	def __init__(self):
