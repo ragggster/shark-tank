@@ -9,6 +9,9 @@ import traceback
 import pickle as pkl
 from collections import defaultdict
 from unpickle import unpickle 
+from scikits.audiolab import Format
+
+
 
 CSV = "season8-pitches.csv" ## Change link to change season
 
@@ -22,14 +25,21 @@ options = {
     'format': 'bestaudio/best', # choice of quality
     'extractaudio' : True,      # only keep the audio
     'audioformat' : "wav",      # convert to mp3 
-    'outtmpl': '%(id)s',        # name the file the ID of the video
+    'outtmpl': '%(id)s.%(ext)s',        # name the file the ID of the video
     'noplaylist' : True,
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'wav',
+        'preferredquality': '192', 
+    }]
     }       # only download single song, not playlist
+
+    
 ydl = youtube_dl.YoutubeDL(options)
 
 def make_savepath(title, artist, savedir=savedir):
     file_name = ("%s--%s.%s" % (title, artist, options['audioformat']))
-    file_name = '_'.join(file_name.split(' '))
+    #file_name = '_'.join(file_name.split(' ')) #replaces spaces with underscores
     return os.path.join(savedir, file_name)
 
 
@@ -56,8 +66,8 @@ with ydl:
             # download video
             try:
                 r = ydl.extract_info(row.Link, download=True)
-                print(r['id'], savepath)
-                os.rename(r['id'], savepath)
+                print(r['id']+ '.' + options['audioformat'] )
+                os.rename(r['id']+ '.' + options['audioformat'] , savepath)
                 # print r 
                 ### Go through the trouble of creating an extra dict here bc otherwise we'd be saving a ton of extraneous info like HTML header stuff and other useless things
                 d = defaultdict()

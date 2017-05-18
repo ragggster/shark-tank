@@ -6,6 +6,12 @@ import scipy.io.wavfile as wav
 import os
 from os import listdir
 from os.path import isfile, join, exists
+import wave
+from scikits.audiolab import Sndfile
+from scikits import audiolab
+from unpickle import unpickle
+
+print (audiolab.available_file_formats())
 
 
 DATA_DIR = './audio-scraping/season8-pitches'
@@ -13,7 +19,7 @@ MFCC_DIR = './data/mfcc'
 
 def get_files_in_dir(directory):
 	# http://stackoverflow.com/questions/3207219/how-to-list-all-files-of-a-directory
-	return [f for f in listdir(directory) if isfile(join(directory, f))]
+	return [f for f in listdir(directory) if (isfile(join(directory, f)) and f[0] != '.')]
 
 
 class MFCC_Extractor():
@@ -29,11 +35,18 @@ class MFCC_Extractor():
 
 
 		for pitch_audio_fn in self.input_fns:
-			print(pitch_audio_fn)
-			(rate,sig) = wav.read(pitch_audio_fn)
-			mfcc_features = python_speech_feature.mfcc(sig, rate)
-			print(pitch_audio_fn)
-			continue
+			full_file = join(DATA_DIR, pitch_audio_fn)
+			open_wav = Sndfile(full_file)
+			rate = open_wav.samplerate
+			
+			sig = open_wav.read_frames(open_wav.nframes)
+
+			# open_wav  = wave.open(full_file, 'r')
+			# rate = open_wav.getframerate()
+			# sig = open_wav.readframes(open_wav.getnframes())
+			#(rate,sig) = wav.read(join(DATA_DIR, pitch_audio_fn))
+			mfcc_features = python_speech_features.mfcc(sig, rate)
+			
 			audio_fn_base = pitch_audio_fn.split('/')[-1]
 
 
