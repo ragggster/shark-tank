@@ -1,6 +1,6 @@
 *.DS_Store
 audio-scraping/season*-pitches/
-#data/mfcc_season*
+*data/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

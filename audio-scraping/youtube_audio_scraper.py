@@ -13,7 +13,7 @@ from scikits.audiolab import Format
 from collections import Counter
 import re
 
-CSV = "season8-pitches.csv" ## Change link to change season
+CSV = "season4-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]
