@@ -37,6 +37,17 @@ class Baseline():
 		self.seq_lens_placeholder = tf.placeholder(tf.float32, (None, ))
 
 
+	#####################################
+	# 			GRAPH SETUP$ 					#
+	# These can be anything that uses 	#
+	# the placeholders and outputs:  	#
+	# self.unreg_loss(unregularized)	#
+	# self.outputs (the results)		#
+	# IF these two things are given,	#
+	# most other methods should continue#
+	# to work or require minimal 		#
+	# modification						#
+
 	def setup_cnn_graph(self):
 		pass
 
@@ -60,6 +71,8 @@ class Baseline():
 		self.unreg_loss = tf.reduce_sum(self.unreg_losses)
 		self.advantage = degenerate_score - self.unreg_loss
 		
+	########## END SETUPS ###############
+	#####################################
 
 	def setup_loss_and_train(self):
 		self.l2_loss = REG*tf.reduce_sum([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
