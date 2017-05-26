@@ -38,7 +38,7 @@ class Baseline():
 
 
 	#####################################
-	# 			GRAPH SETUP$ 					#
+	# 			GRAPH SETUP$ 			#
 	# These can be anything that uses 	#
 	# the placeholders and outputs:  	#
 	# self.unreg_loss(unregularized)	#

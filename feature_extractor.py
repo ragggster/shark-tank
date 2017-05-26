@@ -13,8 +13,8 @@ from unpickle import unpickle
 import shutil
 
 SEASONS = [8, 4]
-DOWNSAMPLE = 1000
-SPLIT_TIME = 20 #in seconds
+#DOWNSAMPLE = 1000
+SPLIT_TIME = 10 #in seconds
 MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds
 
 MFCC_DIR = './data/mfcc' 
@@ -29,7 +29,7 @@ def get_label(line):
 	return float(potential_labels)
 
 class MFCC_Extractor():
-	def __init__(self, season, split_time = 20):
+	def __init__(self, season, split_time = SPLIT_TIME):
 		self.data_dir = './audio-scraping/season%s-pitches' %(season)
 		self.mfcc_dir = MFCC_DIR
 		self.meta_file = './audio-scraping/season%s-pitches-metadata.p' % (season)
