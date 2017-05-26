@@ -3,3 +3,7 @@ scipy
 youtube_dl
 pandas
 tensorflow
+hmmlearn 
+simplejson 
+eyed3 
+pydub 
