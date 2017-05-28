@@ -1,7 +1,9 @@
 import string
 import csv
 from collections import defaultdict
-import pickle
+# import pickle
+# import marshal, types
+import dill as pickle
 
 ## Change to set the season for which the download will occur
 season = 4
@@ -88,6 +90,6 @@ for line in lines:
     correct_label_mappings[line] = episodes[ep_num][temp_pitch_map[num]]
 
 ## Working on figuring out how to pickle this right now
-# print correct_label_mappings
-# pickle_filename = 'season%s-labelled.p'% season
-# pickle.dump(correct_label_mappings, open(pickle_filename, "wb"))
+print correct_label_mappings
+pickle_filename = 'season%s-labelled.p'% season
+pickle.dump(correct_label_mappings, open(pickle_filename, "wb"))
