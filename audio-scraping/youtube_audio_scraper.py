@@ -13,7 +13,7 @@ from unpickle import unpickle
 from collections import Counter
 import re
 
-CSV = "season4-pitches.csv" ## Change link to change season
+CSV = "season5-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]

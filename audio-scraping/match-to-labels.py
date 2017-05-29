@@ -6,13 +6,13 @@ from collections import defaultdict
 import dill as pickle
 
 ## Change to set the season for which the download will occur
-season = 4
+season = 5
 
 ## Generate data structure from .csv file with labels
 ## Format: array, where index corresponds to season (nothing at 0)
 ## Within each season, we have a dict from pitch title to a dict of other attributes
 label_file = 'season%s.csv' % season
-with open(label_file) as csvfile:
+with open(label_file, 'rU') as csvfile:
     reader = csv.DictReader(csvfile)
     episodes = [None] * 100
     for row in reader:
