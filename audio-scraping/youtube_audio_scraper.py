@@ -8,12 +8,12 @@ import os
 import traceback
 import pickle as pkl
 from collections import defaultdict
-from unpickle import unpickle
+#from unpickle import unpickle
 #from scikits.audiolab import Format
 from collections import Counter
 import re
 
-CSV = "season3-pitches.csv" ## Change link to change season
+CSV = "season8-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]
@@ -57,16 +57,22 @@ with ydl:
     # for each row, download
     for _, row in df.iterrows():
         print "Downloading: %s from %s..." % (row.Title, row.Link)
+
         ## Use IFF you're using one of the nice split up pitch playlists ## 
-        # season = season_regex.search(row.Title).group('season')
-        # episode = episode_regex.search(row.Title).group('episode')
+        season = season_regex.search(row.Title).group('season')
+        episode = episode_regex.search(row.Title).group('episode')
 
         ## Else, you'll have to hack together some other way of doing this... 
-        print row.Title 
-        match = re.search(r'''(?ix) ''', row.Title)
+        # video_title = row.Title 
+        # s_idx = video_title.index('S0') 
+        # e_idx = video_title.index('E') 
+        # season = int(video_title[s_idx+1:e_idx])
+        # episode = int(video_title[e_idx+1:])
+
+        # match = re.search(r'''(?ix) ''', row.Title)
         # season = season_regex.search(row.Title).group('S')
         # episode = episode_regex.search(row.Title).group('E')
-        print (season, episode) 
+        # print (season, episode) 
 
         enc_name = 's' + str(season) + '-e' + str(episode)
         name_counter.update([enc_name])
