@@ -21,6 +21,8 @@ NUM_EPOCHS = 3000
 REG = 0.0001
 VAL_SPLIT = 0.15
 
+SOFTMAX = False
+
 LABELS_DIR = './data/labels/'
 
 def get_label(line):
@@ -70,23 +72,31 @@ class Baseline():
 		else:
 			final_inputs = tf.contrib.layers.flatten(rnn_outputs)
 
-		self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(final_inputs, num_outputs = 1, activation_fn = None, biases_initializer = tf.zeros_initializer()))
+		if SOFTMAX:
+			self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(final_inputs, num_outputs = 1, activation_fn = None, biases_initializer = tf.zeros_initializer()))
+			degenerate_score = tf.nn.sparse_softmax_cross_entropy(labels = self.y_placeholder, 0.5*tf.ones_like(self.output))
+			self.unreg_losses = tf.nn.sparse_softmax_cross_entropy(labels = self.y_placeholder, logits = self.outputs)
+			self.unreg_loss = tf.reduce_sum(self.unreg_losses)
+			self.advantage = tf.reduce_mean(degenerate_score - self.unreg_losses)
+			
+		else:
+			self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(final_inputs, num_outputs = 1, activation_fn = None, biases_initializer = tf.zeros_initializer()))
+			# degenerate_score = tf.losses.mean_squared_error(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
+			# self.unreg_losses = tf.losses.mean_squared_error(self.y_placeholder, self.outputs) #PLAY AROUND WITH
+			degenerate_score = tf.losses.hinge_loss(self.y_placeholder, 0.5*tf.ones_like(self.outputs))
+			self.unreg_losses = tf.losses.hinge_loss(self.y_placeholder, self.outputs) #PLAY AROUND WITH
+			self.unreg_loss = tf.reduce_sum(self.unreg_losses)
+			self.advantage = tf.reduce_mean(degenerate_score - self.unreg_losses)
+			
+
 		
-
-
-		# degenerate_score = tf.losses.mean_squared_error(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
-		# self.unreg_losses = tf.losses.mean_squared_error(self.y_placeholder, self.outputs) #PLAY AROUND WITH
-		degenerate_score = tf.losses.hinge_loss(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
-		self.unreg_losses = tf.losses.hinge_loss(self.y_placeholder, self.outputs) #PLAY AROUND WITH
-		self.unreg_loss = tf.reduce_sum(self.unreg_losses)
-		self.advantage = tf.reduce_mean(degenerate_score - self.unreg_losses)
 		
 	########## END SETUPS ###############
 	#####################################
 
 	def setup_loss_and_train(self):
 		self.l2_loss = REG*tf.reduce_sum([tf.nn.l2_loss(v) for v in tf.trainable_variables()])
-		self.loss = self.unreg_loss #+ self.l2_loss
+		self.loss = self.unreg_loss + self.l2_loss
 		global_step = tf.Variable(0, trainable=False)
 		decaying_lr = tf.train.exponential_decay(LR, global_step, 1000000, 0.95, staircase=True)
 		optimizer = tf.train.AdamOptimizer(decaying_lr)
