@@ -90,6 +90,8 @@ def classifyPitches():
 	print("Accuracy is:")
 	print(classifier.score(X_val, y_val))
 
+
+#http://scikit-learn.org/stable/modules/cross_validation.html
 def crossValidate():
 	X, y = generateXandYForAllSeasons()
 	classifier = svm.LinearSVC()
