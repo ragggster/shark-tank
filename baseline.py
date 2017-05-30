@@ -14,16 +14,22 @@ from feature_extractor import *
 
 
 
-BATCHES = 1
+BATCHES = 2
 
-LR = 0.01
+LR = 0.001
 NUM_EPOCHS = 3000
-REG = 0.00001
+REG = 0.0001
 VAL_SPLIT = 0.15
+
+LABELS_DIR = './data/labels/'
+
+def get_label(line):
+	potential_labels = line.split(' ')[0] #ALTER THE INDEX TO CHANGE WHAT YOU ARE PREDICTING!!!!
+	return float(potential_labels)
 
 
 #RNN Params
-RNN_Units = 3
+RNN_Units = 100
 RUN_ON_FINAL_RNN_STATE = True
 
 
@@ -66,10 +72,14 @@ class Baseline():
 
 		self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(final_inputs, num_outputs = 1, activation_fn = None, biases_initializer = tf.zeros_initializer()))
 		
-		degenerate_score = tf.reduce_sum(tf.losses.mean_squared_error(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder)))
-		self.unreg_losses = tf.losses.mean_squared_error(self.y_placeholder, self.outputs) #PLAY AROUND WITH
+
+
+		# degenerate_score = tf.losses.mean_squared_error(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
+		# self.unreg_losses = tf.losses.mean_squared_error(self.y_placeholder, self.outputs) #PLAY AROUND WITH
+		degenerate_score = tf.losses.hinge_loss(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
+		self.unreg_losses = tf.losses.hinge_loss(self.y_placeholder, self.outputs) #PLAY AROUND WITH
 		self.unreg_loss = tf.reduce_sum(self.unreg_losses)
-		self.advantage = degenerate_score - self.unreg_loss
+		self.advantage = tf.reduce_mean(degenerate_score - self.unreg_losses)
 		
 	########## END SETUPS ###############
 	#####################################
@@ -108,7 +118,7 @@ class Baseline():
 
 				with open(join(features_dir, feature_fn)) as ffn:
 					data = np.loadtxt(ffn, delimiter=',')
-					print data.shape
+					print 'data loaded w/ shape:', data.shape
 					num_fns = data.shape[1]
 					X_unpadded.append(data.flatten())
 			except IOError as e:

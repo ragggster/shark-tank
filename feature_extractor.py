@@ -12,31 +12,30 @@ from scikits import audiolab
 from unpickle import unpickle
 import shutil
 
-SEASONS = [8, 4]
+SEASONS = [8, 5, 4]
 #DOWNSAMPLE = 1000
 SPLIT_TIME = 10 #in seconds
 MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds
 
 MFCC_DIR = './data/mfcc' 
-LABELS_DIR = './data/labels/'
 
 def get_files_in_dir(directory):
 	# http://stackoverflow.com/questions/3207219/how-to-list-all-files-of-a-directory
 	return [f for f in listdir(directory) if (isfile(join(directory, f)) and f[0] != '.')]
 
-def get_label(line):
-	potential_labels = line.split(' ')[0] #ALTER THE INDEX TO CHANGE WHAT YOU ARE PREDICTING!!!!
-	return float(potential_labels)
+'''
+
+
+
+'''
 
 class MFCC_Extractor():
 	def __init__(self, season, split_time = SPLIT_TIME):
 		self.data_dir = './audio-scraping/season%s-pitches' %(season)
 		self.mfcc_dir = MFCC_DIR
 		self.meta_file = './audio-scraping/season%s-pitches-metadata.p' % (season)
-		self.labels_dir = LABELS_DIR
 		self.input_fns = get_files_in_dir(self.data_dir)
 		self.split_time = split_time #should be the number of seconds to put in each one
-
 
 	def split_episodes(self, signal, rate):
 		seg_len = self.split_time*rate
@@ -64,12 +63,13 @@ class MFCC_Extractor():
 				mfcc_features = python_speech_features.mfcc(split, rate)
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
-
 					print "Extracted MFCC features for %s, split %i, into: %s" %(pitch_audio_fn, i, output_fn.name)
 if __name__ == '__main__':
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 		shutil.rmtree(MFCC_DIR)
 	os.makedirs(MFCC_DIR)
-
 	for season in SEASONS:
-		MFCC_Extractor(season).write_features()
+		try:
+			MFCC_Extractor(season).write_features()
+		except ...:
+			print 'ERROR: Season %i not found' %(season)
