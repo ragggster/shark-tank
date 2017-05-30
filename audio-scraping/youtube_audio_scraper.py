@@ -13,7 +13,7 @@ from unpickle import unpickle
 from collections import Counter
 import re
 
-CSV = "season5-pitches.csv" ## Change link to change season
+CSV = "season3-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]
@@ -57,9 +57,17 @@ with ydl:
     # for each row, download
     for _, row in df.iterrows():
         print "Downloading: %s from %s..." % (row.Title, row.Link)
+        ## Use IFF you're using one of the nice split up pitch playlists ## 
+        # season = season_regex.search(row.Title).group('season')
+        # episode = episode_regex.search(row.Title).group('episode')
 
-        season = season_regex.search(row.Title).group('season')
-        episode = episode_regex.search(row.Title).group('episode')
+        ## Else, you'll have to hack together some other way of doing this... 
+        print row.Title 
+        match = re.search(r'''(?ix) ''', row.Title)
+        # season = season_regex.search(row.Title).group('S')
+        # episode = episode_regex.search(row.Title).group('E')
+        print (season, episode) 
+
         enc_name = 's' + str(season) + '-e' + str(episode)
         name_counter.update([enc_name])
         enc_name = enc_name + '-p' + str(name_counter[enc_name]) + '-'
