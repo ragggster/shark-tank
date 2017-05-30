@@ -6,4 +6,5 @@ tensorflow
 hmmlearn 
 simplejson 
 eyed3 
-pydub 
+pydub
+praatio
