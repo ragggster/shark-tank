@@ -90,19 +90,22 @@ def write_MFCCs():
 		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
 
-	labels = defaultdict()
 	for season in SEASONS:
 		try:
-			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
-			with open(label_file) as of:
-				to_add = pickle.loads(of.read())
-			labels.update(to_add)
-			MFCC_Extractor(season).write_features()
-			
+			MFCC_Extractor(season).write_features()	
 		except OSError:
 			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
 
 def consolidate_labels():
+	for season in SEASONS:
+		try:
+			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
+			with open(label_file, 'r+') as of:
+				to_add = pickle.loads(of.read())
+			labels.update(to_add)			
+		except OSError:
+			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
+
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
