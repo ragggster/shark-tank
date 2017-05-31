@@ -6,9 +6,9 @@ import scipy.io.wavfile as wav
 import os
 from os import listdir
 from os.path import isfile, join, exists
-import wave
-from scikits.audiolab import Sndfile, play
-from scikits import audiolab
+# import wave
+# from scikits.audiolab import Sndfile, play
+# from scikits import audiolab
 import shutil
 import dill as pickle
 from collections import defaultdict
@@ -65,18 +65,22 @@ class MFCC_Extractor():
 		for pitch_audio_fn in self.input_fns:
 			
 			full_file = join(self.data_dir, pitch_audio_fn)
-			open_wav = Sndfile(full_file)
-			rate = open_wav.samplerate#*DOWNSAMPLE
-			
-			sig = open_wav.read_frames(open_wav.nframes)
-			
+			rate, sig = wav.read(full_file)
+			# open_wav =wave.open(full_file, 'r')
+			# rate = open_wav.getframerate()#*DOWNSAMPLE
+			# frames = open_wav.getnframes()
+
+			# sig = np.array(open_wav.readframes(frames))
+			# print sig
+			# open_wav.close()
 			for i, split in enumerate(self.split_episodes(sig, rate)):
 				mfcc_features = python_speech_features.mfcc(split, rate)
+
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
 					print ("Extracted MFCC features for %s, split %i, into: %s") %(pitch_audio_fn, i, output_fn.name)
 
-if __name__ == '__main__':
+def write_MFCCs():
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 		print ("Deleting previous mfcc")
 		shutil.rmtree(MFCC_DIR)
@@ -98,6 +102,16 @@ if __name__ == '__main__':
 		except OSError:
 			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
 
+def consolidate_labels():
+	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
+		print 'Deleting previous labels'
+		os.remove(FINAL_LABEL_FILE)
+
 	with open(FINAL_LABEL_FILE, 'w') as f:
 		pickle.dump(labels, f)
 		print ("\n----\nLabels compiled into %s\n----\n") %(f) 
+
+if __name__ == '__main__':
+	write_MFCCs()
+	consolidate_labels()
+
