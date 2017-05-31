@@ -55,7 +55,7 @@ class MFCC_Extractor():
 			l = seg_end - seg_start
 			if l < MIN_SIZE:
 				continue
-			print 'split time: %f seconds (%i samples)' %(1.0*l/rate, l)
+			print ('split time: %f seconds (%i samples)') %(1.0*l/rate, l)
 			yield signal[seg_start:seg_end]
 
 	def write_features(self):
@@ -74,16 +74,16 @@ class MFCC_Extractor():
 				mfcc_features = python_speech_features.mfcc(split, rate)
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
-					print "Extracted MFCC features for %s, split %i, into: %s" %(pitch_audio_fn, i, output_fn.name)
+					print ("Extracted MFCC features for %s, split %i, into: %s") %(pitch_audio_fn, i, output_fn.name)
 
 if __name__ == '__main__':
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print "Deleting previous mfcc"
+		print ("Deleting previous mfcc")
 		shutil.rmtree(MFCC_DIR)
 	os.makedirs(MFCC_DIR)
 
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print 'Deleting previous labels'
+		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
 
 	labels = defaultdict()
@@ -96,8 +96,8 @@ if __name__ == '__main__':
 			MFCC_Extractor(season).write_features()
 			
 		except OSError:
-			print '\n-------\nERROR: Season %i not found!\n--------\n' %(season)
+			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
 
 	with open(FINAL_LABEL_FILE, 'w') as f:
 		pickle.dump(labels, f)
-		print "\n----\nLabels compiled into %s\n----\n" %(f) 
+		print ("\n----\nLabels compiled into %s\n----\n") %(f) 
