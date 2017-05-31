@@ -98,9 +98,9 @@ def generateXandYForAllData():
 def classifyPitches():
 	X, y = generateXandYForAllData()
 	# split data into train/val 
-	X_train, X_val, y_train, y_val = train_test_split(X, y test_size=0.10, random_state=42)
+	X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.10, random_state=42)
 	classifier = svm.LinearSVC()
-	classifier.fit(X_train,y _train)
+	classifier.fit(X_train, y_train)
 	classifier.predict(X_val)
 	print("Accuracy is:")
 	print(classifier.score(X_val, y_val))
