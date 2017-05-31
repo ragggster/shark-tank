@@ -9,34 +9,44 @@ from os.path import isfile, join, exists
 import wave
 from scikits.audiolab import Sndfile, play
 from scikits import audiolab
-from unpickle import unpickle
 import shutil
+import dill as pickle
+from collections import defaultdict
 
-SEASONS = [8, 4]
+SEASONS = [5, 8, 4]
 #DOWNSAMPLE = 1000
 SPLIT_TIME = 10 #in seconds
 MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds
 
-MFCC_DIR = './data/mfcc' 
-LABELS_DIR = './data/labels/'
+DATA_DIR = './data'
+MFCC_DIR = DATA_DIR + '/mfcc' 
+
+AUDIO_SCRAPING_DIR = "./audio-scraping/"
+
+FINAL_LABEL_FILE = DATA_DIR + '/labels.p'
 
 def get_files_in_dir(directory):
 	# http://stackoverflow.com/questions/3207219/how-to-list-all-files-of-a-directory
 	return [f for f in listdir(directory) if (isfile(join(directory, f)) and f[0] != '.')]
 
-def get_label(line):
-	potential_labels = line.split(' ')[0] #ALTER THE INDEX TO CHANGE WHAT YOU ARE PREDICTING!!!!
-	return float(potential_labels)
+'''
+For each season in the SEASONS variable, this script goes in, get's all of the 
+wav files from the appropriate scraped audio folder, splits those files up 
+into chunks of size defined by SPLIT_TIME, and extracts the mfcc features 
+from that chunk. ALL data from all of the seasons are written to the 
+same data folder. This script clears the mfcc data directory before starting
+so you can run this repeatedly.
+
+ALSO This compiles the label dictionaries into one dictionary
+'''
 
 class MFCC_Extractor():
 	def __init__(self, season, split_time = SPLIT_TIME):
-		self.data_dir = './audio-scraping/season%s-pitches' %(season)
+		self.data_dir = '%sseason%s-pitches' %(AUDIO_SCRAPING_DIR, season)
 		self.mfcc_dir = MFCC_DIR
-		self.meta_file = './audio-scraping/season%s-pitches-metadata.p' % (season)
-		self.labels_dir = LABELS_DIR
+		self.meta_file = '%sseason%s-pitches-metadata.p' % (AUDIO_SCRAPING_DIR, season)
 		self.input_fns = get_files_in_dir(self.data_dir)
 		self.split_time = split_time #should be the number of seconds to put in each one
-
 
 	def split_episodes(self, signal, rate):
 		seg_len = self.split_time*rate
@@ -64,12 +74,30 @@ class MFCC_Extractor():
 				mfcc_features = python_speech_features.mfcc(split, rate)
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
-
 					print "Extracted MFCC features for %s, split %i, into: %s" %(pitch_audio_fn, i, output_fn.name)
+
 if __name__ == '__main__':
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
+		print "Deleting previous mfcc"
 		shutil.rmtree(MFCC_DIR)
 	os.makedirs(MFCC_DIR)
 
+	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
+		print 'Deleting previous labels'
+		os.remove(FINAL_LABEL_FILE)
+
+	labels = defaultdict()
 	for season in SEASONS:
-		MFCC_Extractor(season).write_features()
+		try:
+			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
+			with open(label_file) as of:
+				to_add = pickle.loads(of.read())
+			labels.update(to_add)
+			MFCC_Extractor(season).write_features()
+			
+		except OSError:
+			print '\n-------\nERROR: Season %i not found!\n--------\n' %(season)
+
+	with open(FINAL_LABEL_FILE, 'w') as f:
+		pickle.dump(labels, f)
+		print "\n----\nLabels compiled into %s\n----\n" %(f) 
