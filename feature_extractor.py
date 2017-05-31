@@ -104,7 +104,7 @@ def write_MFCCs():
 
 def consolidate_labels():
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print 'Deleting previous labels'
+		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
 
 	with open(FINAL_LABEL_FILE, 'w') as f:
