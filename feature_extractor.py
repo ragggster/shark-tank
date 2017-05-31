@@ -100,7 +100,7 @@ def consolidate_labels():
 	for season in SEASONS:
 		try:
 			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
-			with open(label_file) as of:
+			with open(label_file, 'r+') as of:
 				to_add = pickle.loads(of.read())
 			labels.update(to_add)			
 		except OSError:
