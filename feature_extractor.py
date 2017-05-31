@@ -97,6 +97,7 @@ def write_MFCCs():
 			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
 
 def consolidate_labels():
+	labels = dict()
 	for season in SEASONS:
 		try:
 			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
