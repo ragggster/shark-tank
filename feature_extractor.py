@@ -80,15 +80,11 @@ class MFCC_Extractor():
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
 					print "Extracted MFCC features for %s, split %i, into: %s" %(pitch_audio_fn, i, output_fn.name)
 
-if __name__ == '__main__':
+def write_MFCCs():
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 		print "Deleting previous mfcc"
 		shutil.rmtree(MFCC_DIR)
 	os.makedirs(MFCC_DIR)
-
-	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print 'Deleting previous labels'
-		os.remove(FINAL_LABEL_FILE)
 
 	labels = defaultdict()
 	for season in SEASONS:
@@ -102,6 +98,16 @@ if __name__ == '__main__':
 		except OSError:
 			print '\n-------\nERROR: Season %i not found!\n--------\n' %(season)
 
+def consolidate_labels():
+	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
+		print 'Deleting previous labels'
+		os.remove(FINAL_LABEL_FILE)
+
 	with open(FINAL_LABEL_FILE, 'w') as f:
 		pickle.dump(labels, f)
 		print "\n----\nLabels compiled into %s\n----\n" %(f) 
+
+if __name__ == '__main__':
+	write_MFCCs()
+	consolidate_labels()
+	
