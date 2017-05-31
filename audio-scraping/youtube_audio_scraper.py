@@ -13,7 +13,7 @@ from collections import defaultdict
 from collections import Counter
 import re
 
-CSV = "season8-pitches.csv" ## Change link to change season
+CSV = "season2-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]
@@ -59,24 +59,27 @@ with ydl:
         print "Downloading: %s from %s..." % (row.Title, row.Link)
 
         ## Use IFF you're using one of the nice split up pitch playlists ## 
-        season = season_regex.search(row.Title).group('season')
-        episode = episode_regex.search(row.Title).group('episode')
+        # season = season_regex.search(row.Title).group('season')
+        # episode = episode_regex.search(row.Title).group('episode')
 
         ## Else, you'll have to hack together some other way of doing this... 
-        # video_title = row.Title 
-        # s_idx = video_title.index('S0') 
-        # e_idx = video_title.index('E') 
-        # season = int(video_title[s_idx+1:e_idx])
-        # episode = int(video_title[e_idx+1:])
+        video_title = row.Title 
+        if not video_title.startswith('Shark Tank S'):
+            enc_name = video_title.replace(' ', '-').lower()
+        else: 
+            s_idx = video_title.index('S0') 
+            e_idx = video_title.index('E') 
+            season = int(video_title[s_idx+1:e_idx])
+            episode = int(video_title[e_idx+1:])
 
-        # match = re.search(r'''(?ix) ''', row.Title)
-        # season = season_regex.search(row.Title).group('S')
-        # episode = episode_regex.search(row.Title).group('E')
-        # print (season, episode) 
+            # match = re.search(r'''(?ix) ''', row.Title)
+            # season = season_regex.search(row.Title).group('S')
+            # episode = episode_regex.search(row.Title).group('E')
+            # print (season, episode) 
 
-        enc_name = 's' + str(season) + '-e' + str(episode)
-        name_counter.update([enc_name])
-        enc_name = enc_name + '-p' + str(name_counter[enc_name]) + '-'
+            enc_name = 's' + str(season) + '-e' + str(episode)
+            name_counter.update([enc_name])
+            enc_name = enc_name + '-p' + str(name_counter[enc_name]) + '-'
 
         try:
             # re-download video irrespective of whether it's already around, we need to download to extract relevant info

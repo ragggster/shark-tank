@@ -13,7 +13,7 @@ import shutil
 import dill as pickle
 from collections import defaultdict
 
-SEASONS = [5, 8, 4]
+SEASONS = [5, 8, 4, 7]
 #DOWNSAMPLE = 1000
 SPLIT_TIME = 10 #in seconds
 MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds

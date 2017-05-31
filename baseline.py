@@ -15,7 +15,6 @@ from feature_extractor import *
 from tqdm import tqdm
 
 
-BATCHES = 5
 
 LR = 0.0005
 NUM_EPOCHS = 3000
@@ -23,16 +22,24 @@ REG = 0.0001
 VAL_SPLIT = 0.15
 
 #RNN Params
-RNN_Units = 10
+RNN_Units = 100
 RUN_ON_FINAL_RNN_STATE = True
 SOFTMAX = False
 LSTM = False
 BATCH_NORM = True
 
-LIMIT_DATA_POINTS = 1000
+LIMIT_DATA_POINTS = 1500
+
+BATCHES = LIMIT_DATA_POINTS//100
+
 
 ADD_LAYER = False
-ADD_LAYER_U = 20
+ADD_LAYER_U = 10
+
+#CNN PARAMS
+L1_FILTER_PARAMS = {'filters' : 64, 'kernel_size': 6, 'strides': 2}
+L2_FILTER_PARAMS = {'filters' : 32, 'kernel_size': 4, 'strides': 2}
+L3_FILTER_PARAMS = {'filters' : 16, 'kernel_size': 3, 'strides': 1}
 
 
 LABELS_FN = './data/labels.p'
@@ -59,6 +66,48 @@ class Baseline():
 		self.seq_lens_placeholder = tf.placeholder(tf.int32, (None, ))
 
 
+	def setup_rnn(self, X, seq_lens = None):
+		if LSTM:
+			cell = tf.contrib.rnn.LSTMCell(RNN_Units, activation = tf.nn.relu, cell_clip= 50.0) #COULD TRY OTHER CELLS
+		else:
+			cell = tf.contrib.rnn.BasicRNNCell(RNN_Units, activation = tf.nn.relu) #COULD TRY OTHER CELLS
+
+		rnn_outputs, final_state = tf.nn.dynamic_rnn(cell, X, seq_lens, dtype=tf.float32)
+		
+		if RUN_ON_FINAL_RNN_STATE:
+			if LSTM:
+				final_outputs = final_state.h #final hidden state
+			else:
+				final_outputs = final_state
+		else:
+			final_outputs = tf.contrib.layers.flatten(rnn_outputs)
+		return final_outputs
+
+
+	'''
+	Sets up a final affine layer that feeds into either a softmax loss or a binary loss
+	'''
+	def final_affine_layer_and_loss(self, inputs):
+		if SOFTMAX:
+			self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(inputs, num_outputs = 2, activation_fn = None, biases_initializer = tf.zeros_initializer()))
+			
+			degenerate_score = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = tf.cast(self.y_placeholder, tf.int32), logits= 0.5*tf.ones_like(self.outputs))
+			unreg_losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = tf.cast(self.y_placeholder, tf.int32), logits = self.outputs)
+			self.unreg_loss = tf.reduce_mean(unreg_losses)
+			self.advantage = tf.reduce_mean(degenerate_score - unreg_losses)
+		else:
+			self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(inputs, num_outputs = 1, activation_fn = None, biases_initializer = tf.zeros_initializer()))
+
+			# degenerate_score = tf.losses.mean_squared_error(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
+			# self.unreg_losses = tf.losses.mean_squared_error(self.y_placeholder, self.outputs) #PLAY AROUND WITH
+			
+			adjusted_y = (self.y_placeholder-0.5)*2.0 #[0, 1] => [-1, 1]
+			degenerate_score = tf.losses.hinge_loss(self.y_placeholder, tf.zeros_like(self.outputs))
+			unreg_losses = tf.losses.hinge_loss(self.y_placeholder, self.outputs) #PLAY AROUND WITH
+			
+			self.unreg_loss = tf.reduce_mean(unreg_losses)
+			self.advantage = tf.reduce_mean(degenerate_score - unreg_losses)
+
 	#####################################
 	# 			GRAPH SETUP$ 			#
 	# These can be anything that uses 	#
@@ -71,58 +120,58 @@ class Baseline():
 	# modification						#
 
 	def setup_cnn_graph(self):
-		pass
+		print self.X_placeholder.get_shape().as_list()
+		conv1 = tf.layers.conv1d(self.X_placeholder, filters = L1_FILTER_PARAMS['filters'],
+		 											kernel_size=L1_FILTER_PARAMS['kernel_size'],
+		 											strides=L1_FILTER_PARAMS['strides'],
+		 											activation = tf.nn.relu)
+		
+
+		print 'c1', conv1.get_shape().as_list()
+		conv2 = tf.layers.conv1d(conv1, filters = L2_FILTER_PARAMS['filters'],
+		 											kernel_size=L2_FILTER_PARAMS['kernel_size'],
+		 											strides=L2_FILTER_PARAMS['strides'],
+		 											activation = tf.nn.relu)
+		print 'c2', conv2.get_shape().as_list()
+		conv3 = tf.layers.conv1d(conv2, filters = L3_FILTER_PARAMS['filters'],
+		 											kernel_size=L3_FILTER_PARAMS['kernel_size'],
+		 											strides=L3_FILTER_PARAMS['strides'],
+		 											activation = tf.nn.relu)#*(L3_FILTER_PARAMS.values()), use_bias = True)
+
+		print 'c3', conv3.get_shape().as_list()
+
+		
+		self.final_affine_layer_and_loss(tf.contrib.layers.flatten(conv3))
+
 
 	def setup_hybrid_graph(self):
-		pass
+		conv1 = tf.layers.conv1d(self.X_placeholder, filters = L1_FILTER_PARAMS['filters'],
+		 											kernel_size=L1_FILTER_PARAMS['kernel_size'],
+		 											strides=L1_FILTER_PARAMS['strides'],
+		 											activation = tf.nn.relu)
+		
+
+		print 'c1', conv1.get_shape().as_list()
+		conv2 = tf.layers.conv1d(conv1, filters = L2_FILTER_PARAMS['filters'],
+		 											kernel_size=L2_FILTER_PARAMS['kernel_size'],
+		 											strides=L2_FILTER_PARAMS['strides'],
+		 											activation = tf.nn.relu)
+		
+		rnn_outputs = self.setup_rnn(conv2)
+		self.final_affine_layer_and_loss(rnn_outputs)
+
+
 
 	def setup_rnn_graph(self):
-		if LSTM:
-			cell = tf.contrib.rnn.LSTMCell(RNN_Units, activation = tf.nn.relu, cell_clip= 50.0) #COULD TRY OTHER CELLS
-		else:
-			cell = tf.contrib.rnn.BasicRNNCell(RNN_Units, activation = tf.nn.relu) #COULD TRY OTHER CELLS
-
-		rnn_outputs, final_state = tf.nn.dynamic_rnn(cell, self.X_placeholder, self.seq_lens_placeholder, dtype=tf.float32)
-		
-		if RUN_ON_FINAL_RNN_STATE:
-			if LSTM:
-				final_inputs = final_state.h #final hidden state
-			else:
-				final_inputs = final_state
-		else:
-			final_inputs = tf.contrib.layers.flatten(rnn_outputs)
-
+		rnn_outputs = self.setup_rnn(self.X_placeholder, self.seq_lens_placeholder)
 		if BATCH_NORM:
-			final_inputs = tf.layers.batch_normalization(final_inputs)
-		self.to_check = final_inputs
-
-
+			rnn_outputs = tf.layers.batch_normalization(rnn_outputs)
+		self.to_check = rnn_outputs
 		if ADD_LAYER:
-			final_inputs = tf.layers.dense(final_inputs, ADD_LAYER_U, activation = tf.nn.relu)
+			rnn_outputs = tf.layers.dense(rnn_outputs, ADD_LAYER_U, activation = tf.nn.relu)
+		self.final_affine_layer_and_loss(rnn_outputs)
 
-
-		if SOFTMAX:
-			self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(final_inputs, num_outputs = 2, activation_fn = None, biases_initializer = tf.zeros_initializer()))
-			
-			degenerate_score = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = tf.cast(self.y_placeholder, tf.int32), logits= 0.5*tf.ones_like(self.outputs))
-			self.unreg_losses = tf.nn.sparse_softmax_cross_entropy_with_logits(labels = tf.cast(self.y_placeholder, tf.int32), logits = self.outputs)
-			self.unreg_loss = tf.reduce_mean(self.unreg_losses)
-			self.advantage = tf.reduce_mean(degenerate_score - self.unreg_losses)
-		else:
-			
-			self.outputs = tf.squeeze(tf.contrib.layers.fully_connected(final_inputs, num_outputs = 1, activation_fn = None, biases_initializer = tf.zeros_initializer()))
-						
-			# degenerate_score = tf.losses.mean_squared_error(self.y_placeholder, 0.5*tf.ones_like(self.y_placeholder))
-			# self.unreg_losses = tf.losses.mean_squared_error(self.y_placeholder, self.outputs) #PLAY AROUND WITH
-			
-			adjusted_y = (self.y_placeholder-0.5)*2.0 #[0, 1] => [-1, 1]
-			degenerate_score = tf.losses.hinge_loss(self.y_placeholder, tf.zeros_like(self.outputs))
-			self.unreg_losses = tf.losses.hinge_loss(self.y_placeholder, self.outputs) #PLAY AROUND WITH
-			
-			self.unreg_loss = tf.reduce_mean(self.unreg_losses)
-			self.advantage = tf.reduce_mean(degenerate_score - self.unreg_losses)
-
-
+	
 		
 		
 	########## END SETUPS ###############
@@ -135,7 +184,7 @@ class Baseline():
 		decaying_lr = tf.train.exponential_decay(LR, global_step, 1000000, 0.95, staircase=True)
 		optimizer = tf.train.AdamOptimizer(decaying_lr)
 		self.train_step = optimizer.minimize(self.loss, global_step=global_step)
-
+		print "\n----\n%i variables total\n----\n"%(sum([np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]))
 
 	def get_batch(self, X, y, seq_lens, batch=True, batches = BATCHES):
 		total_examples = len(seq_lens)	
@@ -155,7 +204,7 @@ class Baseline():
 	by file name with a label and these two are then joined together.
 	'''
 	def prepare(self, features_dir, labels_fn):
-		feature_files = get_files_in_dir(features_dir)
+		feature_files = np.random.permutation(get_files_in_dir(features_dir))
 		#features = get_files_in_dir(features_dir)
 		num_features = None
 		with open(labels_fn) as lf:
@@ -220,8 +269,8 @@ class Baseline():
 
 	def get_accuracy(self, Y, pred):
 		correct = []
-
 		for i, y in enumerate(Y):
+			
 			if SOFTMAX:
 				pred_i = np.argmax(pred, axis=1)[i]
 			else:
@@ -236,8 +285,9 @@ class Baseline():
 
 	def setup(self):
 		self.setup_input()
-		# self.setup_cnn_graph(max_X/num_fns, num_fns)
-		self.setup_rnn_graph()
+		self.setup_hybrid_graph()
+		# self.setup_cnn_graph()
+		# self.setup_rnn_graph()
 		self.setup_loss_and_train()
 
 	def center_on_train_data(self, X_train, X_val):
@@ -257,12 +307,10 @@ class Baseline():
 				for batch in self.get_batch(X_train, y_train, seq_lens_train):
 					X_batch, y_batch, seq_lens_batch = batch
 					
-
-
 					train_feed_dict = {self.X_placeholder: X_batch, self.y_placeholder : y_batch, self.seq_lens_placeholder : seq_lens_batch}
 
-					_, l2_loss, unreg_loss, check = session.run([self.train_step, self.l2_loss, self.unreg_loss, self.to_check], train_feed_dict)
-					#print check, l2_loss
+					_, l2_loss, unreg_loss  = session.run([self.train_step, self.l2_loss, self.unreg_loss], train_feed_dict)
+					
 
 					total_loss = l2_loss + unreg_loss
 
