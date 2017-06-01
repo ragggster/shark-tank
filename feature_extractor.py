@@ -13,7 +13,7 @@ import shutil
 import dill as pickle
 from collections import defaultdict
 
-SEASONS = [5, 8, 4, 7]
+SEASONS = [1, 2, 3, 4, 5, 6, 8, 7]
 #DOWNSAMPLE = 1000
 SPLIT_TIME = 10 #in seconds
 MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds
@@ -87,10 +87,6 @@ def write_MFCCs():
 		shutil.rmtree(MFCC_DIR)
 	os.makedirs(MFCC_DIR)
 
-	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print ('Deleting previous labels')
-		os.remove(FINAL_LABEL_FILE)
-
 	for season in SEASONS:
 		try:
 			MFCC_Extractor(season).write_features()	
@@ -105,7 +101,7 @@ def consolidate_labels():
 			with open(label_file, 'r+') as of:
 				to_add = pickle.loads(of.read())
 			labels.update(to_add)			
-		except OSError:
+		except IOError, OSError:
 			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
 
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
