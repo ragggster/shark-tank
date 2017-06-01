@@ -1,5 +1,5 @@
 *.DS_Store
-# audio-scraping/season*-pitches/
+audio-scraping/season*pitches/
 *data/*
 sftp-config.json
 

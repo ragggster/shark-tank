@@ -19,7 +19,7 @@ from tqdm import tqdm
 LR = 0.0005
 NUM_EPOCHS = 3000
 REG = 0.0001
-VAL_SPLIT = 0.15
+VAL_SPLIT = 0.5
 
 #RNN Params
 RNN_Units = 50
@@ -57,8 +57,95 @@ def get_label(labels, fn):
 
 
 class Baseline():
-	def __init__(self):
-		pass
+	def __init__(self, features_dir, labels_file):
+		X, y, seq_lens = self.prepare(features_dir, labels_file)
+		self.X_train, self.X_val, self.y_train, self.y_val, self.seq_lens_train, self.seq_lens_val = self.split_data(X, y, seq_lens)
+		self.X_train, self.X_val = self.center_on_train_data(self.X_train, self.X_val)
+
+
+	def run_baseline(self):
+		
+		self.setup()
+
+		
+		with tf.Session() as session:
+			session.run(tf.global_variables_initializer())
+			for epoch in range(NUM_EPOCHS):
+				for batch in self.get_batch(self.X_train, self.y_train, self.seq_lens_train):
+					X_batch, y_batch, seq_lens_batch = batch
+					
+					train_feed_dict = {self.X_placeholder: X_batch, self.y_placeholder : y_batch, self.seq_lens_placeholder : seq_lens_batch}
+
+					_, l2_loss, unreg_loss  = session.run([self.train_step, self.l2_loss, self.unreg_loss], train_feed_dict)
+					
+
+					total_loss = l2_loss + unreg_loss
+
+					val_feed_dict = {self.X_placeholder: self.X_val, self.seq_lens_placeholder: self.seq_lens_val, self.y_placeholder : self.y_val}
+					adv, val_loss, output = session.run([self.advantage, self.loss, self.outputs], val_feed_dict)
+
+					accuracy = self.get_accuracy(self.y_val, output)
+					print "accuracy: %f \t degenerate accuracy: %f" %(accuracy, self.get_degenerate_accuracy(self.y_val, output) )
+
+					#Advantage is the performance above a degenerate algorithm (predict one class every time)
+					#print epoch, 'val_loss', val_loss, '(unreg:', val_unreg_loss, ')', ' -- train_loss: ', total_loss, '(', "unreg:", unreg_loss, ')'
+					print adv ,unreg_loss, zip(output[0:7], self.y_val[0:7])
+
+	def get_degenerate_accuracy(self, truth, output):
+		if min(truth) == 0:
+			return max([self.get_accuracy(truth, np.ones_like(output)), self.get_accuracy(truth, np.zeros_like(output))])
+		if min(truth) == -1:
+			return max([self.get_accuracy(truth, np.ones_like(output)), self.get_accuracy(truth, np.zeros_like(output) -1)])
+		else:
+			print ("wtf is going on...")
+
+	def prepare(self, features_dir, labels_fn):
+		feature_files = np.random.permutation(get_files_in_dir(features_dir))
+		#features = get_files_in_dir(features_dir)
+		num_features = None
+		with open(labels_fn) as lf:
+			labels = pickle.load(lf)
+
+		X_unpadded, y = [], []
+		print 'loading data'
+
+
+		for i, feature_fn in enumerate(tqdm(feature_files)):
+			if i > LIMIT_DATA_POINTS:
+				break
+			try:
+				y.append(get_label(labels, feature_fn))
+				with open(join(features_dir, feature_fn)) as ffn:
+					data = np.loadtxt(ffn, delimiter=',')
+					# print 'data loaded w/ shape:', data.shape
+					
+					if num_features is None:
+						num_features = data.shape[1]
+					assert(num_features == data.shape[1])
+
+					X_unpadded.append(data.flatten())
+			except IOError as e:
+				print "ERROR", e
+				continue
+
+
+		# This part of the code reshapes X into a temporal series 
+		# after padding (it was flattened previously to more easily pad)
+		print 'formating data'
+		N = len(y)
+		y = np.array(y)
+		seq_lens = map(len, X_unpadded)
+		max_X = max(seq_lens)
+		X = np.zeros((N, max_X))
+		for n in range(N):
+			x_len = seq_lens[n]
+			X[n, 0:x_len] += np.array(X_unpadded[n])
+		X = X.reshape((N, -1, num_features))
+		assert(X.shape[1] == max_X/num_features)
+
+		self.max_time = max_X/num_features
+		self.n_features = num_features
+		return X, y, seq_lens
 
 	def setup(self):
 		self.setup_input()
@@ -214,53 +301,7 @@ class Baseline():
 	Each file corresponds to one data point which is matched up 
 	by file name with a label and these two are then joined together.
 	'''
-	def prepare(self, features_dir, labels_fn):
-		feature_files = np.random.permutation(get_files_in_dir(features_dir))
-		#features = get_files_in_dir(features_dir)
-		num_features = None
-		with open(labels_fn) as lf:
-			labels = pickle.load(lf)
-
-		X_unpadded, y = [], []
-		print 'loading data'
-
-
-		for i, feature_fn in enumerate(tqdm(feature_files)):
-			if i > LIMIT_DATA_POINTS:
-				break
-			try:
-				y.append(get_label(labels, feature_fn))
-				with open(join(features_dir, feature_fn)) as ffn:
-					data = np.loadtxt(ffn, delimiter=',')
-					# print 'data loaded w/ shape:', data.shape
-					
-					if num_features is None:
-						num_features = data.shape[1]
-					assert(num_features == data.shape[1])
-
-					X_unpadded.append(data.flatten())
-			except IOError as e:
-				print "ERROR", e
-				continue
-
-
-		# This part of the code reshapes X into a temporal series 
-		# after padding (it was flattened previously to more easily pad)
-		print 'formating data'
-		N = len(y)
-		y = np.array(y)
-		seq_lens = map(len, X_unpadded)
-		max_X = max(seq_lens)
-		X = np.zeros((N, max_X))
-		for n in range(N):
-			x_len = seq_lens[n]
-			X[n, 0:x_len] += np.array(X_unpadded[n])
-		X = X.reshape((N, -1, num_features))
-		assert(X.shape[1] == max_X/num_features)
-
-		self.max_time = max_X/num_features
-		self.n_features = num_features
-		return X, y, seq_lens
+	
 
 	def split_data(self, X, y, seq_lens):
 		seq_lens = np.array(seq_lens)
@@ -301,36 +342,9 @@ class Baseline():
 		means = np.mean(np.reshape(X_train, (-1, n_features)), axis = 0)
 		return X_train - means, X_val - means
 
-	def run_baseline(self, features_dir, labels_file):
-		X, y, seq_lens = self.prepare(features_dir, labels_file)
-		self.setup()
-
-		X_train, X_val, y_train, y_val, seq_lens_train, seq_lens_val = self.split_data(X, y, seq_lens)
-		X_train, X_val = self.center_on_train_data(X_train, X_val)
-		with tf.Session() as session:
-			session.run(tf.global_variables_initializer())
-			for epoch in range(NUM_EPOCHS):
-				for batch in self.get_batch(X_train, y_train, seq_lens_train):
-					X_batch, y_batch, seq_lens_batch = batch
-					
-					train_feed_dict = {self.X_placeholder: X_batch, self.y_placeholder : y_batch, self.seq_lens_placeholder : seq_lens_batch}
-
-					_, l2_loss, unreg_loss  = session.run([self.train_step, self.l2_loss, self.unreg_loss], train_feed_dict)
-					
-
-					total_loss = l2_loss + unreg_loss
-
-					val_feed_dict = {self.X_placeholder: X_val, self.seq_lens_placeholder: seq_lens_val, self.y_placeholder : y_val}
-					adv, val_loss, output = session.run([self.advantage, self.loss, self.outputs], val_feed_dict)
-
-					accuracy = self.get_accuracy(y_val, output)
-					print "accuracy: :", accuracy
-
-					#Advantage is the performance above a degenerate algorithm (predict one class every time)
-					#print epoch, 'val_loss', val_loss, '(unreg:', val_unreg_loss, ')', ' -- train_loss: ', total_loss, '(', "unreg:", unreg_loss, ')'
-					print adv ,unreg_loss, zip(output[0:7], y_val[0:7])
+	
 
 if __name__ == '__main__':
-	baseline = Baseline()
-	baseline.run_baseline(MFCC_DIR, LABELS_FN)
+	baseline = Baseline(MFCC_DIR, LABELS_FN)
+	baseline.run_baseline()
 
