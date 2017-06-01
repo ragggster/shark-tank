@@ -1,6 +1,7 @@
 from pydub import AudioSegment
 import os
 import csv
+from os.path import join
 
 ''' 
 NOTE
@@ -38,11 +39,12 @@ class Pitch_Extractor():
 	Current example of name of generate pitch file: s7-cookie-kahuna.wav
 	'''
 	def extract_pitches(self):
-		with open(self.pitch_times_file) as csvfile:
-			readCSV = csv.reader(csvfile, delimiter=',')
+		with open(self.pitch_times_file, 'rU') as csvfile:
+			readCSV = csv.reader(csvfile, dialect=csv.excel_tab, delimiter=',')
 			for row in readCSV:
 				source_file = row[0]
-				pitch_source = AudioSegment.from_wav(source_file)
+				full_path = join('./season6-source-pitches', source_file)
+				pitch_source = AudioSegment.from_wav(full_path)
 				source_len = pitch_source.duration_seconds*1000 #total length of source file in ms
 				for i in range(1, len(row)):
 					pitch_info = row[i].split('|')
@@ -62,5 +64,5 @@ class Pitch_Extractor():
 					pitch_filepath = self.data_dir + "/" + "%s-%s.wav" %(source_name, pitch_name)
 					pitch_clip.export(pitch_filepath, format='wav')
 
-pe = Pitch_Extractor("7") #example
+pe = Pitch_Extractor("6") #example
 pe.extract_pitches()

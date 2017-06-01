@@ -6,7 +6,8 @@ from collections import defaultdict
 import dill as pickle
 
 ## Change to set the season for which the download will occur
-season = 8
+
+season = 6
 
 ## Generate data structure from .csv file with labels
 ## Format: array, where index corresponds to season (nothing at 0)
@@ -20,7 +21,7 @@ with open(label_file, 'rU') as csvfile:
         season_num = int(row['Season'])
         episode_num = int(row['No. in series'])
         pitch_name = row['Company']
-        label = row['Deal']
+        label = row['Deal ']
         if label == 'Yes':
             label_code = 1
         else:
@@ -68,7 +69,7 @@ for line in lines:
     season_num, ep_num, pitch_num = elems[0], elems[1], elems[2]
     season_num = int(''.join(e for e in season_num if e.isdigit()))
     ep_num = int(''.join(e for e in ep_num if e.isdigit()))
-    pitch_num = int(''.join(e for e in pitch_num if e.isdigit()))
+    #pitch_num = int(''.join(e for e in pitch_num if e.isdigit()))
     pitch_title = "".join(elems[3:])#.join
     pitch_title = pitch_title.replace('.wav', '')
     line = line.replace('\n', '')
