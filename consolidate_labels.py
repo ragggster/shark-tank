@@ -26,5 +26,5 @@ if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 
 
 # pickle.dump(correct_label_mappings, open(pickle_filename, "wb"))
-pickle.dump(labels, open(FINAL_LABEL_FILE, 'wb'))
-print ("\n----\nLabels compiled into %s\n----\n") %(f) 
+pickle.dump(labels, open(FINAL_LABEL_FILE, "wb"))
+print ("\n----\nLabels compiled into %s\n----\n") %(FINAL_LABEL_FILE) 
