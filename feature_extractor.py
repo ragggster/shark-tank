@@ -13,7 +13,7 @@ import shutil
 import dill as pickle
 from collections import defaultdict
 
-SEASONS = [5, 8, 4, 7]
+SEASONS = [1, 2, 3, 4, 5, 6, 8, 7]
 #DOWNSAMPLE = 1000
 SPLIT_TIME = 10 #in seconds
 MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds
@@ -55,7 +55,7 @@ class MFCC_Extractor():
 			l = seg_end - seg_start
 			if l < MIN_SIZE:
 				continue
-			print ('split time: %f seconds (%i samples)') %(1.0*l/rate, l)
+			print ('split time: %f seconds (%i samples)' %(1.0*l/rate, l))
 			yield signal[seg_start:seg_end]
 
 	def write_features(self):
@@ -79,17 +79,13 @@ class MFCC_Extractor():
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
 					# np.savetxt(output_fn, split, delimiter= ',')
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
-					print ("Extracted MFCC features for %s, split %i, into: %s") %(pitch_audio_fn, i, output_fn.name)
+					print ("Extracted MFCC features for %s, split %i, into: %s" %(pitch_audio_fn, i, output_fn.name))
 
 def write_MFCCs():
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 		print ("Deleting previous mfcc")
 		shutil.rmtree(MFCC_DIR)
 	os.makedirs(MFCC_DIR)
-
-	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print ('Deleting previous labels')
-		os.remove(FINAL_LABEL_FILE)
 
 	for season in SEASONS:
 		try:
@@ -104,17 +100,25 @@ def consolidate_labels():
 			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
 			with open(label_file, 'r+') as of:
 				to_add = pickle.loads(of.read())
-			labels.update(to_add)			
+<<<<<<< HEAD
+			labels.update(to_add)
+			MFCC_Extractor(season).write_features()
+			
 		except OSError:
+			print ('\n-------\nERROR: Season %i not found!\n--------\n' %(season))
+=======
+			labels.update(to_add)			
+		except IOError, OSError:
 			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
+>>>>>>> a7c0bf96957a5944f25b79eefc44ea93fb863a26
 
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print 'Deleting previous labels'
+		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
 
 	with open(FINAL_LABEL_FILE, 'w') as f:
 		pickle.dump(labels, f)
-		print ("\n----\nLabels compiled into %s\n----\n") %(f) 
+		print ("\n----\nLabels compiled into %s\n----\n" %(f))
 
 if __name__ == '__main__':
 	write_MFCCs()

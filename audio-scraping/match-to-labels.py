@@ -6,6 +6,7 @@ from collections import defaultdict
 import dill as pickle
 
 ## Change to set the season for which the download will occur
+
 season = 6
 
 ## Generate data structure from .csv file with labels

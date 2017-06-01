@@ -16,19 +16,19 @@ from tqdm import tqdm
 
 
 
-LR = 0.0005
+LR = 0.0001
 NUM_EPOCHS = 3000
 REG = 0.0001
-VAL_SPLIT = 0.5
+VAL_SPLIT = 0.2
 
 #RNN Params
-RNN_Units = 50
+RNN_Units = 100
 RUN_ON_FINAL_RNN_STATE = True
 SOFTMAX = False
 LSTM = False
 BATCH_NORM = True
 
-LIMIT_DATA_POINTS = 1500
+LIMIT_DATA_POINTS = 4500
 
 BATCHES = LIMIT_DATA_POINTS//10
 
@@ -62,6 +62,12 @@ class Baseline():
 		self.X_train, self.X_val, self.y_train, self.y_val, self.seq_lens_train, self.seq_lens_val = self.split_data(X, y, seq_lens)
 		self.X_train, self.X_val = self.center_on_train_data(self.X_train, self.X_val)
 
+	def setup(self):
+		self.setup_input()
+		self.setup_hybrid_graph()
+		# self.setup_cnn_graph()
+		# self.setup_rnn_graph()
+		self.setup_loss_and_train()
 
 	def run_baseline(self):
 		
@@ -125,7 +131,10 @@ class Baseline():
 
 					X_unpadded.append(data.flatten())
 			except IOError as e:
-				print "ERROR", e
+				print "\n\nERROR", e, "\n\n"
+				continue
+			except KeyError as e:
+				print "\n\nnon-existent entry:", e, "\n\n"
 				continue
 
 
@@ -147,12 +156,7 @@ class Baseline():
 		self.n_features = num_features
 		return X, y, seq_lens
 
-	def setup(self):
-		self.setup_input()
-		# self.setup_hybrid_graph()
-		# self.setup_cnn_graph()
-		self.setup_rnn_graph()
-		self.setup_loss_and_train()
+	
 
 	def setup_input(self):
 		self.X_placeholder = tf.placeholder(tf.float32, (None, self.max_time, self.n_features))
