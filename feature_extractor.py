@@ -77,6 +77,7 @@ class MFCC_Extractor():
 				mfcc_features = python_speech_features.mfcc(split, rate)
 
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
+					# np.savetxt(output_fn, split, delimiter= ',')
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
 					print ("Extracted MFCC features for %s, split %i, into: %s") %(pitch_audio_fn, i, output_fn.name)
 

@@ -22,7 +22,7 @@ REG = 0.0001
 VAL_SPLIT = 0.15
 
 #RNN Params
-RNN_Units = 100
+RNN_Units = 50
 RUN_ON_FINAL_RNN_STATE = True
 SOFTMAX = False
 LSTM = False
@@ -30,7 +30,7 @@ BATCH_NORM = True
 
 LIMIT_DATA_POINTS = 1500
 
-BATCHES = LIMIT_DATA_POINTS//100
+BATCHES = LIMIT_DATA_POINTS//10
 
 
 ADD_LAYER = False
@@ -59,6 +59,13 @@ def get_label(labels, fn):
 class Baseline():
 	def __init__(self):
 		pass
+
+	def setup(self):
+		self.setup_input()
+		# self.setup_hybrid_graph()
+		# self.setup_cnn_graph()
+		self.setup_rnn_graph()
+		self.setup_loss_and_train()
 
 	def setup_input(self):
 		self.X_placeholder = tf.placeholder(tf.float32, (None, self.max_time, self.n_features))
@@ -121,19 +128,23 @@ class Baseline():
 
 	def setup_cnn_graph(self):
 		print self.X_placeholder.get_shape().as_list()
-		conv1 = tf.layers.conv1d(self.X_placeholder, filters = L1_FILTER_PARAMS['filters'],
+		conv1 = tf.layers.conv1d(self.X_placeholder,filters = L1_FILTER_PARAMS['filters'],
 		 											kernel_size=L1_FILTER_PARAMS['kernel_size'],
 		 											strides=L1_FILTER_PARAMS['strides'],
 		 											activation = tf.nn.relu)
 		
 
 		print 'c1', conv1.get_shape().as_list()
-		conv2 = tf.layers.conv1d(conv1, filters = L2_FILTER_PARAMS['filters'],
+		if BATCH_NORM:
+			conv1 = tf.layers.batch_normalization(conv1)
+		conv2 = tf.layers.conv1d(conv1, 			filters = L2_FILTER_PARAMS['filters'],
 		 											kernel_size=L2_FILTER_PARAMS['kernel_size'],
 		 											strides=L2_FILTER_PARAMS['strides'],
 		 											activation = tf.nn.relu)
 		print 'c2', conv2.get_shape().as_list()
-		conv3 = tf.layers.conv1d(conv2, filters = L3_FILTER_PARAMS['filters'],
+		if BATCH_NORM:
+			conv2 = tf.layers.batch_normalization(conv1)
+		conv3 = tf.layers.conv1d(conv2,	 			filters = L3_FILTER_PARAMS['filters'],
 		 											kernel_size=L3_FILTER_PARAMS['kernel_size'],
 		 											strides=L3_FILTER_PARAMS['strides'],
 		 											activation = tf.nn.relu)#*(L3_FILTER_PARAMS.values()), use_bias = True)
@@ -283,12 +294,7 @@ class Baseline():
 
 		return sum(correct)*1.0/len(correct)
 
-	def setup(self):
-		self.setup_input()
-		self.setup_hybrid_graph()
-		# self.setup_cnn_graph()
-		# self.setup_rnn_graph()
-		self.setup_loss_and_train()
+	
 
 	def center_on_train_data(self, X_train, X_val):
 		n_features = X_train.shape[2]
@@ -317,7 +323,8 @@ class Baseline():
 					val_feed_dict = {self.X_placeholder: X_val, self.seq_lens_placeholder: seq_lens_val, self.y_placeholder : y_val}
 					adv, val_loss, output = session.run([self.advantage, self.loss, self.outputs], val_feed_dict)
 
-					print "accuracy: :", self.get_accuracy(y_val, output)
+					accuracy = self.get_accuracy(y_val, output)
+					print "accuracy: :", accuracy
 
 					#Advantage is the performance above a degenerate algorithm (predict one class every time)
 					#print epoch, 'val_loss', val_loss, '(unreg:', val_unreg_loss, ')', ' -- train_loss: ', total_loss, '(', "unreg:", unreg_loss, ')'
