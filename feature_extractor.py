@@ -90,7 +90,14 @@ def write_MFCCs():
 		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
 
-	labels = defaultdict()
+	for season in SEASONS:
+		try:
+			MFCC_Extractor(season).write_features()	
+		except OSError:
+			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
+
+def consolidate_labels():
+	labels = dict()
 	for season in SEASONS:
 		try:
 			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
@@ -102,7 +109,6 @@ def write_MFCCs():
 		except OSError:
 			print ('\n-------\nERROR: Season %i not found!\n--------\n' %(season))
 
-def consolidate_labels():
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
 		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
