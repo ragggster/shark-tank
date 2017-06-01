@@ -13,7 +13,7 @@ from collections import defaultdict
 from collections import Counter
 import re
 
-CSV = "season2-pitches.csv" ## Change link to change season
+CSV = "season6-pitches.csv" ## Change link to change season
 
 # create directory
 savedir = os.path.splitext(CSV)[0]

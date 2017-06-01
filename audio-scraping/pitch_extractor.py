@@ -43,7 +43,7 @@ class Pitch_Extractor():
 			readCSV = csv.reader(csvfile, dialect=csv.excel_tab, delimiter=',')
 			for row in readCSV:
 				source_file = row[0]
-				full_path = join('./season7-source-pitches', source_file)
+				full_path = join('./season6-source-pitches', source_file)
 				pitch_source = AudioSegment.from_wav(full_path)
 				source_len = pitch_source.duration_seconds*1000 #total length of source file in ms
 				for i in range(1, len(row)):
@@ -64,5 +64,5 @@ class Pitch_Extractor():
 					pitch_filepath = self.data_dir + "/" + "%s-%s.wav" %(source_name, pitch_name)
 					pitch_clip.export(pitch_filepath, format='wav')
 
-pe = Pitch_Extractor("7") #example
+pe = Pitch_Extractor("6") #example
 pe.extract_pitches()
