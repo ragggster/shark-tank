@@ -30,7 +30,7 @@ def get_files_in_dir(directory):
 	return [f for f in listdir(directory) if (isfile(join(directory, f)) and f[0] != '.')]
 
 '''
-For each season in the SEASONS variable, this script goes in, get's all of the 
+For each season in the SEASONS variable, this script goes in, gets all of the 
 wav files from the appropriate scraped audio folder, splits those files up 
 into chunks of size defined by SPLIT_TIME, and extracts the mfcc features 
 from that chunk. ALL data from all of the seasons are written to the 
