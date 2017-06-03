@@ -30,7 +30,7 @@ def get_files_in_dir(directory):
 	return [f for f in listdir(directory) if (isfile(join(directory, f)) and f[0] != '.')]
 
 '''
-For each season in the SEASONS variable, this script goes in, get's all of the 
+For each season in the SEASONS variable, this script goes in, gets all of the 
 wav files from the appropriate scraped audio folder, splits those files up 
 into chunks of size defined by SPLIT_TIME, and extracts the mfcc features 
 from that chunk. ALL data from all of the seasons are written to the 
@@ -55,7 +55,7 @@ class MFCC_Extractor():
 			l = seg_end - seg_start
 			if l < MIN_SIZE:
 				continue
-			print ('split time: %f seconds (%i samples)') %(1.0*l/rate, l)
+			print ('split time: %f seconds (%i samples)' %(1.0*l/rate, l))
 			yield signal[seg_start:seg_end]
 
 	def write_features(self):
@@ -79,7 +79,7 @@ class MFCC_Extractor():
 				with open(join(self.mfcc_dir, pitch_audio_fn.split('.')[0] + ".%i" %(i)), 'w')	as output_fn:
 					# np.savetxt(output_fn, split, delimiter= ',')
 					np.savetxt(output_fn, mfcc_features, delimiter= ',')
-					print ("Extracted MFCC features for %s, split %i, into: %s") %(pitch_audio_fn, i, output_fn.name)
+					print ("Extracted MFCC features for %s, split %i, into: %s" %(pitch_audio_fn, i, output_fn.name))
 
 def write_MFCCs():
 	if exists(MFCC_DIR): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
@@ -100,17 +100,19 @@ def consolidate_labels():
 			label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
 			with open(label_file, 'r+') as of:
 				to_add = pickle.loads(of.read())
-			labels.update(to_add)			
-		except IOError, OSError:
-			print ('\n-------\nERROR: Season %i not found!\n--------\n') %(season)
+			labels.update(to_add)
+			MFCC_Extractor(season).write_features()
+			
+		except OSError:
+			print ('\n-------\nERROR: Season %i not found!\n--------\n' %(season))
 
 	if exists(FINAL_LABEL_FILE): #DELETES ALL PRE-EXISTING FEATURE DATA FIRST! NB
-		print 'Deleting previous labels'
+		print ('Deleting previous labels')
 		os.remove(FINAL_LABEL_FILE)
 
 	with open(FINAL_LABEL_FILE, 'w') as f:
 		pickle.dump(labels, f)
-		print ("\n----\nLabels compiled into %s\n----\n") %(f) 
+		print ("\n----\nLabels compiled into %s\n----\n" %(f))
 
 if __name__ == '__main__':
 	write_MFCCs()
