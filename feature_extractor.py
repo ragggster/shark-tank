@@ -15,8 +15,8 @@ from collections import defaultdict
 
 SEASONS = [1, 2, 3, 4, 5, 6, 8, 7]
 #DOWNSAMPLE = 1000
-SPLIT_TIME = 10 #in seconds
-MIN_SIZE = 250000 #in number of samples, 250000 is about 6 seconds
+SPLIT_TIME = 5 #in seconds
+MIN_SIZE = 250000//2 #in number of samples, 250000 is about 6 seconds
 
 DATA_DIR = './data'
 MFCC_DIR = DATA_DIR + '/mfcc' 

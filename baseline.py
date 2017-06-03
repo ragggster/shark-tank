@@ -25,12 +25,12 @@ VAL_SPLIT = 0.2
 RNN_Units = 100
 RUN_ON_FINAL_RNN_STATE = True
 SOFTMAX = False
-LSTM = False
+LSTM = True
 BATCH_NORM = True
 
 LIMIT_DATA_POINTS = 4500
 
-BATCHES = LIMIT_DATA_POINTS//10
+BATCHES = LIMIT_DATA_POINTS//50
 
 
 ADD_LAYER = False
@@ -64,9 +64,9 @@ class Baseline():
 
 	def setup(self):
 		self.setup_input()
-		self.setup_hybrid_graph()
+		# self.setup_hybrid_graph()
 		# self.setup_cnn_graph()
-		# self.setup_rnn_graph()
+		self.setup_rnn_graph()
 		self.setup_loss_and_train()
 
 	def run_baseline(self):
@@ -126,7 +126,7 @@ class Baseline():
 					# print 'data loaded w/ shape:', data.shape
 					
 					if num_features is None:
-						num_features = data.shape[1]
+						num_features = data.shape[1] #should always be 13
 					assert(num_features == data.shape[1])
 
 					X_unpadded.append(data.flatten())
@@ -166,7 +166,7 @@ class Baseline():
 
 	def setup_rnn(self, X, seq_lens = None):
 		if LSTM:
-			cell = tf.contrib.rnn.LSTMCell(RNN_Units, activation = tf.nn.relu, cell_clip= 50.0) #COULD TRY OTHER CELLS
+			cell = tf.contrib.rnn.LSTMCell(RNN_Units, activation = tf.nn.tanh, cell_clip= 500.0) #COULD TRY OTHER CELLS
 		else:
 			cell = tf.contrib.rnn.BasicRNNCell(RNN_Units, activation = tf.nn.relu) #COULD TRY OTHER CELLS
 
@@ -223,7 +223,7 @@ class Baseline():
 		 											kernel_size=L1_FILTER_PARAMS['kernel_size'],
 		 											strides=L1_FILTER_PARAMS['strides'],
 		 											activation = tf.nn.relu)
-		
+		conv1 = tf.layers.max_pooling1d(conv1, 4, 2)
 
 		print 'c1', conv1.get_shape().as_list()
 		if BATCH_NORM:
@@ -232,7 +232,8 @@ class Baseline():
 		 											kernel_size=L2_FILTER_PARAMS['kernel_size'],
 		 											strides=L2_FILTER_PARAMS['strides'],
 		 											activation = tf.nn.relu)
-		print 'c2', conv2.get_shape().as_list()
+
+		conv2 = tf.layers.max_pooling1d(conv2, 2, 2)
 		if BATCH_NORM:
 			conv2 = tf.layers.batch_normalization(conv1)
 		conv3 = tf.layers.conv1d(conv2,	 			filters = L3_FILTER_PARAMS['filters'],
@@ -352,3 +353,4 @@ if __name__ == '__main__':
 	baseline = Baseline(MFCC_DIR, LABELS_FN)
 	baseline.run_baseline()
 
+# 
