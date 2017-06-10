@@ -13,7 +13,7 @@ SEASONS = [1, 2, 3, 4, 5, 6, 7, 8]
 labels = dict()
 for season in SEASONS:
 	try:
-		label_file = "%sseason%i-labelled.p" % (AUDIO_SCRAPING_DIR, season)
+		label_file = "%sseason%i-labelled-new.p" % (AUDIO_SCRAPING_DIR, season)
 		with open(label_file, 'r+') as of:
 			to_add = pickle.loads(of.read())
 		labels.update(to_add)			

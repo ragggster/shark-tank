@@ -116,5 +116,5 @@ def consolidate_labels():
 
 if __name__ == '__main__':
 	write_MFCCs()
-	consolidate_labels()
+	# consolidate_labels()
 
