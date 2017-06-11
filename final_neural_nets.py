@@ -14,7 +14,7 @@ import dill as pickle
 from feature_extractor import *
 from tqdm import tqdm
 
-SAVE_FILE = 'results_meta_init_state_w_pooling_PReLU.csv'
+SAVE_FILE = 'results_prosody.csv'
 
 
 LR = 0.0001
@@ -48,7 +48,7 @@ L3_FILTER_PARAMS = {'filters' : 16, 'kernel_size': 3, 'strides': 1}
 LABELS_FN = './data/labels.p'
 
 CLASSIFY = 'label_code' #needs to be a key in the labels dictionaries
-
+DATA_DIR =  MFCC_DIR #'./data/prosody/combined_pros' 
 
 # def get_label(line):
 # 	potential_labels = line.split(' ')[0] #ALTER THE INDEX TO CHANGE WHAT YOU ARE PREDICTING!!!!
@@ -431,7 +431,7 @@ class Baseline():
 	
 
 if __name__ == '__main__':
-	baseline = Baseline(MFCC_DIR, LABELS_FN)
+	baseline = Baseline(DATA_DIR, LABELS_FN)
 	baseline.run_baseline()
 
 # 
